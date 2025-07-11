@@ -97,10 +97,36 @@ def send_otp():
     except Exception as e:
         return jsonify({"error": f"Erreur d'envoi d'email : {str(e)}"}), 500
 
+@app.route('/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.json
+    email = data.get('email')
+    otp_received = data.get('otp')
+
+    if not email or not otp_received:
+        return jsonify({"error": "Email ou OTP manquant"}), 400
+
+    otp_info = otp_store.get(email)
+    if not otp_info:
+        return jsonify({"error": "Aucun OTP trouvé pour cet email"}), 404
+
+    if datetime.datetime.utcnow() > otp_info["expires_at"]:
+        return jsonify({"error": "OTP expiré"}), 403
+
+    if otp_received != otp_info["otp"]:
+        return jsonify({"error": "OTP incorrect"}), 401
+
+    return jsonify({"message": "OTP validé avec succès"}), 200
+
 # Pour voir les OTP générés (dev seulement)
 @app.route('/debug-otp', methods=['GET'])
 def debug():
     return jsonify(otp_store)
+
+@app.route('/')
+def home():
+    return "Bienvenue sur l’API DjosAll OTP 🎉"
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
