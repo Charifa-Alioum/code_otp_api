@@ -4,6 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 import datetime
 import os
+import json
 
 # Firebase Admin SDK
 import firebase_admin
@@ -15,7 +16,13 @@ app = Flask(__name__)
 otp_store = {}
 
 # Firebase Admin init
-cred = credentials.Certificate("djossall-firebase-adminsdk-fbsvc-986a373c5b.json")  # Ton fichier de service
+# Récupère le contenu de la variable d’environnement (copié depuis ton fichier .json)
+cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+if not cred_json:
+    raise Exception("FIREBASE_CREDENTIALS_JSON n'est pas défini dans les variables d'environnement")
+
+cred_dict = json.loads(cred_json)
+cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred)
 
 # OTP generator
